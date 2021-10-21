@@ -294,10 +294,7 @@ class DragenCoverageMetrics(BaseMultiqcModule):
         data_by_sample = defaultdict(dict)
         for sn in data_by_phenotype_by_sample:
             for phenotype in data_by_phenotype_by_sample[sn]:
-                new_sn = sn
-                if phenotype == "normal":
-                    new_sn = sn + "_normal"
-                data_by_sample[new_sn] = data_by_phenotype_by_sample[sn][phenotype]
+                data_by_sample[sn] = data_by_phenotype_by_sample[sn][phenotype]
 
         if not data_by_sample:
             return set()
