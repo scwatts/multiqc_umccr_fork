@@ -63,8 +63,7 @@ class MultiqcModule(BaseMultiqcModule):
             "concordance_marker_threshold": r"\(coverage per marker threshold : (\d+) reads\)",
             "concordance_min_mapping_quality": r"Minimum mappinq quality: (\d+)",
             "concordance_min_base_quality": r"Minimum base quality: (\d+)",
-            "contamination_normal": r"Normal sample contamination level: ([\d\.]+)%",
-            "contamination_tumor": r"Tumor sample contamination level: ([\d\.]+)%",
+            "contamination": r"Sample contamination level: ([\d\.]+)%",
         }
 
         parsed_data = {}
@@ -76,7 +75,7 @@ class MultiqcModule(BaseMultiqcModule):
         def _cp_type(data):
             if "concordance_concordance" in parsed_data:
                 return "concordance"
-            elif "contamination_normal" in parsed_data:
+            elif "contamination" in parsed_data:
                 return "contamination"
 
         if len(parsed_data) > 0:
@@ -101,18 +100,9 @@ class MultiqcModule(BaseMultiqcModule):
             "format": "{:,.2f}",
             "scale": "RdYlGn",
         }
-        headers["contamination_normal"] = {
-            "title": "N Contamination",
-            "description": "Normal sample contamination level",
-            "max": 100,
-            "min": 0,
-            "suffix": "%",
-            "format": "{:,.3f}",
-            "scale": "RdYlBu-rev",
-        }
-        headers["contamination_tumor"] = {
-            "title": "T Contamination",
-            "description": "Tumor sample contamination level",
+        headers["contamination"] = {
+            "title": "Contamination",
+            "description": "Sample contamination level",
             "max": 100,
             "min": 0,
             "suffix": "%",
