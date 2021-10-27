@@ -44,9 +44,10 @@ class DragenMappingMetics(BaseMultiqcModule):
 
         # flattening phenotype-sample data by adding a prefix " normal" to the normal samples
         data_by_sample = dict()
-        for sn in data_by_phenotype_by_sample:
-            for phenotype in data_by_phenotype_by_sample[sn]:
-                data_by_sample[sn] = data_by_phenotype_by_sample[sn][phenotype]
+        for sbj in data_by_rg_by_sample:
+            for sn, sample_data in data_by_rg_by_sample[sbj].items():
+                phenotype = sample_data['phenotype']
+                data_by_sample[sn] = data_by_phenotype_by_sample[sbj][phenotype]
 
         if not data_by_rg_by_sample and not data_by_phenotype_by_sample:
             return set()
@@ -362,6 +363,8 @@ def parse_mapping_metrics_file(f):
         if analysis == "ALIGNING PER RG":
             # setting normal and tumor sample names for future use
             readgroup = fields[1]
+            if 'phenotype' not in data_by_readgroup[readgroup]:
+                data_by_readgroup[readgroup]['phenotype'] = phenotype
             data_by_readgroup[readgroup][metric] = value
             if percentage is not None:
                 data_by_readgroup[readgroup][metric + " pct"] = percentage
