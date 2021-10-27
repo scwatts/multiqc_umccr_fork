@@ -39,9 +39,7 @@ class DragenFragmentLength(BaseMultiqcModule):
         data_by_rg = {}
         for sn, d_rg in data_by_rg_by_sample.items():
             for rg, d in d_rg.items():
-                if rg in d_rg:
-                    rg = rg + " (" + sn + ")"
-                data_by_rg[rg] = d
+                data_by_rg[sn] = d
 
         # Exit early if we have no valid data, such as from FastQcOnly runs
         if not data_by_rg:
