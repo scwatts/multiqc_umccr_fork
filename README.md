@@ -1,5 +1,13 @@
 # ![MultiQC](https://raw.githubusercontent.com/ewels/MultiQC/master/docs/images/MultiQC_logo.png)
 
+&nbsp;
+
+<h3 align='center'>This UMCCR fork+branch contains changes specific to umccrise</h3>
+
+&nbsp;
+
+---
+
 ### Aggregate bioinformatics results across many samples into a single report
 
 ##### Find [documentation](http://multiqc.info/docs) and [example reports](http://multiqc.info/examples/rna-seq/multiqc_report.html) at [http://multiqc.info](http://multiqc.info)
