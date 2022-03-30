@@ -43,14 +43,17 @@ class DragenMappingMetics(BaseMultiqcModule):
         data_by_phenotype_by_sample = self.ignore_samples(data_by_phenotype_by_sample)
 
         data_by_sample = dict()
-        for sn in data_by_phenotype_by_sample:
-            for phenotype in data_by_phenotype_by_sample[sn]:
-                data_by_sample[sn] = data_by_phenotype_by_sample[sn][phenotype]
+        for sbj in data_by_rg_by_sample:
+            for phenotype, sample_data in data_by_rg_by_sample[sbj].items():
+                [sn] = sample_data.keys()
+                data_by_sample[sn] = data_by_phenotype_by_sample[sbj][phenotype]
 
         data_by_rg_by_sample_new = dict()
-        for sn in data_by_rg_by_sample:
-            for phenotype in data_by_rg_by_sample[sn]:
-                data_by_rg_by_sample_new[sn] = data_by_rg_by_sample[sn][phenotype]
+        for sbj in data_by_rg_by_sample:
+            for phenotype in data_by_rg_by_sample[sbj]:
+                assert len(data_by_rg_by_sample[sbj][phenotype]) == 1
+                [sn] = data_by_rg_by_sample[sbj][phenotype].keys()
+                data_by_rg_by_sample_new[sn] = data_by_rg_by_sample[sbj][phenotype]
         data_by_rg_by_sample = data_by_rg_by_sample_new
         del data_by_rg_by_sample_new
 
