@@ -634,6 +634,11 @@ def run(
     # Only run the modules for which any files were found
     non_empty_modules = {key.split("/")[0].lower() for key, files in report.files.items() if len(files) > 0}
     run_modules = [m for m in run_modules if list(m.keys())[0].lower() in non_empty_modules]
+    # NOTE(SW): with changes in 1.13dev custom data doesn't appear to ever be included in the
+    # report as the 'custom_content' module is excluded in the above list comp for 'run_modules'.
+    # Manually add the module here when we have custom data in the config.
+    if config.custom_data:
+        run_modules.append({'custom_content': {}})
     run_module_names = [list(m.keys())[0] for m in run_modules]
 
     # Run the modules!
