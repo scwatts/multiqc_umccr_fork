@@ -1,63 +1,53 @@
 #!/usr/bin/env python
-from __future__ import print_function
-
-import re
-from collections import defaultdict
-from multiqc.modules.base_module import BaseMultiqcModule
-from multiqc.plots import linegraph
-
-# Initialise the logger
 import logging
+import collections
 
-log = logging.getLogger(__name__)
+import multiqc.modules.base_module
+import multiqc.plots
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 MIN_CNT_TO_SHOW_ON_PLOT = 5
 
 
-class DragenFragmentLength(BaseMultiqcModule):
+class DragenFragmentLength(multiqc.modules.base_module.BaseMultiqcModule):
+
     def add_fragment_length_hist(self):
-        data_by_rg_by_sample = defaultdict(dict)
-
+        data_sample = collections.defaultdict(dict)
         for f in self.find_log_files("dragen/fragment_length_hist"):
-            data_by_rg = parse_fragment_length_hist_file(f)
-            if f["s_name"] in data_by_rg_by_sample:
-                log.debug("Duplicate sample name found! Overwriting: {}".format(f["s_name"]))
-            self.add_data_source(f, section="stats")
+            f_data_sample = parse_fragment_length_hist_file(f)
 
-            for rg, data in data_by_rg.items():
-                if any(rg in d_rg for sn, d_rg in data_by_rg_by_sample.items()):
-                    log.debug("Duplicate read group name {} found for {}! Overwriting".format(rg, f["s_name"]))
-            data_by_rg_by_sample[f["s_name"]].update(data_by_rg)
+            for sample, data in f_data_sample.items():
+                sample_clean = self.clean_s_name(sample, f)
+                if sample_clean in data_sample:
+                    LOGGER.debug(f'Duplicate sample name found! Overwriting: {sample_clean}')
+                data_sample[sample_clean] = data
 
         # Filter to strip out ignored sample names:
-        data_by_rg_by_sample = self.ignore_samples(data_by_rg_by_sample)
-        if not data_by_rg_by_sample:
+        data_sample = self.ignore_samples(data_sample)
+
+        # Check we have data before proceeding
+        if not data_sample:
             return set()
 
-        # Merging all data
-        data_by_rg = {}
-        for sn, d_rg in data_by_rg_by_sample.items():
-            for rg, d in d_rg.items():
-                data_by_rg[sn] = d
-
-        # Exit early if we have no valid data, such as from FastQcOnly runs
-        if not data_by_rg:
-            return set()
+        # Write data to file
+        self.write_data_file(data_sample, "dragen_frag_len")
 
         smooth_points = 300
         self.add_section(
             name="Fragment length hist",
             anchor="dragen-fragment-length-histogram",
             description="""
-            Distribution of estimated fragment lengths of mapped reads per read group. 
-            Only points supported by at least {} reads are shown to prevent long flat tail. 
+            Distribution of estimated fragment lengths of mapped reads per sample.
+            Only points supported by at least {} reads are shown to prevent long flat tail.
             The plot is also smoothed down to showing 300 points on the X axis to reduce noise.
             """.format(
                 MIN_CNT_TO_SHOW_ON_PLOT
             ),
-            plot=linegraph.plot(
-                data_by_rg,
+            plot=multiqc.plots.linegraph.plot(
+                data_sample,
                 {
                     "id": "dragen_fragment_length",
                     "title": "Dragen: Fragment length hist",
@@ -70,7 +60,7 @@ class DragenFragmentLength(BaseMultiqcModule):
                 },
             ),
         )
-        return data_by_rg_by_sample.keys()
+        return data_sample.keys()
 
 
 def parse_fragment_length_hist_file(f):
@@ -97,25 +87,22 @@ def parse_fragment_length_hist_file(f):
     39316,0
     39317,1
     """
-
-    f["s_name"] = re.search(r"(.*)\.fragment_length_hist.csv", f["fn"]).group(1)
-
-    data_by_rg = defaultdict(dict)
-
-    read_group = None
-    for line in f["f"].splitlines():
-        if line.startswith("#Sample"):
-            read_group = line.split("#Sample: ")[1]
+    data_sample = collections.defaultdict(dict)
+    sample = None
+    for line in f.get('f').splitlines():
+        if line.startswith('#Sample'):
+            sample = line.split(' ', maxsplit=1)[1]
+            assert sample is not None
+            assert len(sample) > 0
+            assert sample not in data_sample
+        elif line == 'FragmentLength,Count':
+            continue
         else:
-            assert read_group is not None
-            frag_len, cnt = line.split(",")
-            try:
-                frag_len = int(frag_len)
-                cnt = int(cnt)
-            except ValueError:
-                assert line == "FragmentLength,Count", line
-            else:
-                if cnt >= MIN_CNT_TO_SHOW_ON_PLOT:  # to prevent long flat tail
-                    data_by_rg[read_group][frag_len] = cnt
-
-    return data_by_rg
+            fragment_length_str, count_str = line.split(',')
+            fragment_length = int(fragment_length_str)
+            count = int(count_str)
+            # Skip low counts to in order to truncate uninformative long distribution tail
+            if count < MIN_CNT_TO_SHOW_ON_PLOT:
+                continue
+            data_sample[sample][fragment_length] = count
+    return data_sample
