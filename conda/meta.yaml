@@ -1,4 +1,4 @@
-{% set version = "1.12dev+umccrise.0.0.2" %}
+{% set version = "1.13dev+umccrise.0.0.1" %}
 
 package:
   name: multiqc
